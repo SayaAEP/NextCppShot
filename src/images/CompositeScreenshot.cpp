@@ -10,11 +10,13 @@ inline BYTE toByte(int value){
 }
 
 void CompositeScreenshot::init(const Screenshot& white, const Screenshot& black){
-	Gdiplus::Bitmap* whiteShot = white.getBitmap(), *blackShot = black.getBitmap();
+	auto whiteShot = white.getBitmap();
+    auto blackShot = black.getBitmap();
+
 	if(whiteShot->GetWidth() != blackShot->GetWidth() || whiteShot->GetHeight() != blackShot->GetHeight()) throw std::runtime_error("Black/white screenshot size mismatch");
     if(whiteShot->GetWidth() == 0 || whiteShot->GetHeight() == 0) throw std::runtime_error("Zero width captured screenshot");
 
-	m_image = new Gdiplus::Bitmap(whiteShot->GetWidth(), whiteShot->GetHeight(), PixelFormat32bppARGB);
+	m_image = std::make_shared<Gdiplus::Bitmap>(whiteShot->GetWidth(), whiteShot->GetHeight(), PixelFormat32bppARGB);
     m_captureRect = white.getCaptureRect();
 
 	differentiateAlpha(whiteShot, blackShot);
@@ -30,7 +32,7 @@ CompositeScreenshot::CompositeScreenshot(const Screenshot& white, const Screensh
     this->init(white, black);
 }
 
-void CompositeScreenshot::differentiateAlpha(Gdiplus::Bitmap* whiteShot, Gdiplus::Bitmap* blackShot){
+void CompositeScreenshot::differentiateAlpha(std::shared_ptr<Gdiplus::Bitmap> whiteShot, std::shared_ptr<Gdiplus::Bitmap> blackShot){
     auto monitorRects = CppShot::getMonitorRects();
 
 	Gdiplus::BitmapData transparentBitmapData;
@@ -168,8 +170,8 @@ void CompositeScreenshot::cropImage() {
     if(newWidth % 2 != 0) newWidth++;
     if(newHeight % 2 != 0) newHeight++;
 
-    Gdiplus::Bitmap* newBitmap = new Gdiplus::Bitmap(newWidth, newHeight, PixelFormat32bppARGB);
-    Gdiplus::Bitmap* oldBitmap = m_image;
+    std::shared_ptr<Gdiplus::Bitmap> newBitmap = std::make_shared<Gdiplus::Bitmap>(newWidth, newHeight, PixelFormat32bppARGB);
+    auto oldBitmap = m_image;
 
     Gdiplus::Rect oldRect(0, 0, oldBitmap->GetWidth(), oldBitmap->GetHeight());
     Gdiplus::Rect newRect(0, 0, newWidth, newHeight);
@@ -199,6 +201,5 @@ void CompositeScreenshot::cropImage() {
         std::memcpy(dstRow, srcRow, copyBytes);
     }
 
-	delete m_image;
 	m_image = newBitmap;
 }

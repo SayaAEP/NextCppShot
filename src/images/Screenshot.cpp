@@ -7,12 +7,8 @@ Screenshot::Screenshot(HWND window) {
 	capture(window);
 }
 
-Screenshot::~Screenshot() {
-	delete m_image;
-}
-
 void Screenshot::capture(HWND window) {
-	delete m_image;
+	m_image = nullptr;
 
     m_window = window;
 	RECT rct = createRect();
@@ -27,7 +23,7 @@ void Screenshot::capture(HWND window) {
     DeleteDC(memdc);
     ReleaseDC(HWND_DESKTOP, hdc);
 
-	m_image = new Gdiplus::Bitmap(hbitmap, NULL);
+	m_image = std::make_shared<Gdiplus::Bitmap>(hbitmap, nullptr);
 	
     DeleteObject(hbitmap);
 }
@@ -48,7 +44,7 @@ bool Screenshot::isCaptured() {
     return m_image != nullptr;
 }
 
-Gdiplus::Bitmap* Screenshot::getBitmap() const {
+std::shared_ptr<Gdiplus::Bitmap> Screenshot::getBitmap() const {
 	return m_image;
 }
 

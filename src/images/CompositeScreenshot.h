@@ -11,7 +11,7 @@ class CompositeScreenshot : public Screenshot {
 	RECT m_captureRect;
 
 	void init(const Screenshot& white, const Screenshot& black);
-	void differentiateAlpha(Gdiplus::Bitmap* whiteShot, Gdiplus::Bitmap* blackShot);
+	void differentiateAlpha(std::shared_ptr<Gdiplus::Bitmap> whiteShot, std::shared_ptr<Gdiplus::Bitmap> blackShot);
 	void cropImage();
 	Gdiplus::Rect calculateCrop();
 public:
