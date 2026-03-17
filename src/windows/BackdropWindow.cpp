@@ -8,7 +8,10 @@ void BackdropWindow::waitForResize(LONG left, LONG top) const {
 
     for(int x = 0; x < 66; x++){ //capping out at 330 ms, which is already fairly slow
     
-    	COLORREF currentColor = GetPixel(GetDC(HWND_DESKTOP), left, top);
+        auto dc = GetDC(HWND_DESKTOP);
+    	COLORREF currentColor = GetPixel(dc, left, top);
+        ReleaseDC(HWND_DESKTOP, dc);
+        
         std::cout << std::hex << currentColor << " " << m_color << std::endl;
         if(m_color == currentColor)
             break;

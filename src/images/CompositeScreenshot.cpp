@@ -6,7 +6,7 @@
 #include <sstream>
 
 inline BYTE toByte(int value){
-    return value > 255 ? 255 : value;
+    return value > 255 ? 255 : (value < 0 ? 0 : value);
 }
 
 void CompositeScreenshot::init(const Screenshot& white, const Screenshot& black){
@@ -124,8 +124,8 @@ Gdiplus::Rect CompositeScreenshot::calculateCrop(){
     m_image->LockBits(&rect1, Gdiplus::ImageLockModeRead, PixelFormat32bppARGB, &transparentBitmapData);
     BYTE* transparentPixels = (BYTE*) (void*) transparentBitmapData.Scan0;
 
-    for(int x = 0; x < imageWidth; x++){
-        for(int y = 0; y < imageHeight; y++){
+    for(int y = 0; y < imageHeight; y++){
+        for(int x = 0; x < imageWidth; x++){
             int currentPixel = (y*imageWidth + x)*4;
             if(transparentPixels[currentPixel+3] > 0){
                 leftcrop = (leftcrop > x) ? x : leftcrop;
@@ -200,6 +200,9 @@ void CompositeScreenshot::cropImage() {
 
         std::memcpy(dstRow, srcRow, copyBytes);
     }
+    
+    newBitmap->UnlockBits(&newBitmapData);
+    oldBitmap->UnlockBits(&oldBitmapData);
 
 	m_image = newBitmap;
 }
