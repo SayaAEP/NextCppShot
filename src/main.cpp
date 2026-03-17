@@ -222,9 +222,9 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
         NULL,
         1,
         MOD_CONTROL,
-        'b'))
+        'B'))
     {
-        _tprintf(_T("CTRL+b\n"));
+        _tprintf(_T("CTRL+B\n"));
     }else{
         MessageBox(NULL, L"Unable to register the CTRL+B keyboard shortcut.", ERROR_TITLE, 0x10);
     }
@@ -233,9 +233,9 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
         NULL,
         2,
         MOD_CONTROL | MOD_SHIFT,
-        'b'))
+        'B'))
     {
-        _tprintf(_T("CTRL+SHIFT+b\n"));
+        _tprintf(_T("CTRL+SHIFT+B\n"));
     }else{
         MessageBox(NULL, L"Unable to register the CTRL+SHIFT+B keyboard shortcut.", ERROR_TITLE, 0x10);
     }
