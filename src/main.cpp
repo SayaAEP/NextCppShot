@@ -39,7 +39,7 @@ void RemoveIllegalChars(std::wstring& str){
     std::wstring::iterator it;
     std::wstring illegalChars = L"\\/:?\"<>|*";
     for (it = str.begin() ; it < str.end() ; ++it){
-        bool found = illegalChars.find(*it) != std::string::npos;
+        bool found = illegalChars.find(*it) != std::wstring::npos;
         if(found){
             *it = ' ';
         }
