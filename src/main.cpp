@@ -221,8 +221,8 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
     if (RegisterHotKey(
         NULL,
         1,
-        0x2,
-        0x42))  //0x42 is 'b'
+        MOD_CONTROL,
+        'b'))
     {
         _tprintf(_T("CTRL+b\n"));
     }else{
@@ -232,8 +232,8 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
     if (RegisterHotKey(
         NULL,
         2,
-        0x6,
-        0x42))  //0x42 is 'b'
+        MOD_CONTROL | MOD_SHIFT,
+        'b'))
     {
         _tprintf(_T("CTRL+SHIFT+b\n"));
     }else{
