@@ -33,17 +33,24 @@ set(IMGUI_SOURCES
     "${IMGUI_DIR}/imgui_tables.cpp"
 )
 
-# ImGui backend sources (all 7 renderers)
+# ImGui backend sources — core (always compiled)
 set(IMGUI_BACKEND_SOURCES
     "${IMGUI_DIR}/backends/imgui_impl_win32.cpp"
     "${IMGUI_DIR}/backends/imgui_impl_dx9.cpp"
-    "${IMGUI_DIR}/backends/imgui_impl_dx10.cpp"
-    "${IMGUI_DIR}/backends/imgui_impl_dx11.cpp"
-    "${IMGUI_DIR}/backends/imgui_impl_dx12.cpp"
-    "${IMGUI_DIR}/backends/imgui_impl_opengl2.cpp"
     "${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp"
-    # "${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp"
 )
+
+# Modern backends — DX10/11/12 + OpenGL2 (requires recent Windows SDK)
+# Disable for Win98/2000 builds: -DNCS_MODERN_BACKENDS=OFF
+option(NCS_MODERN_BACKENDS "Compile DX10/11/12 + OpenGL2 backends" ON)
+if(NCS_MODERN_BACKENDS)
+    list(APPEND IMGUI_BACKEND_SOURCES
+        "${IMGUI_DIR}/backends/imgui_impl_dx10.cpp"
+        "${IMGUI_DIR}/backends/imgui_impl_dx11.cpp"
+        "${IMGUI_DIR}/backends/imgui_impl_dx12.cpp"
+        "${IMGUI_DIR}/backends/imgui_impl_opengl2.cpp"
+    )
+endif()
 
 # =============================================================================
 # Main Executable Configuration

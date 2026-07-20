@@ -1,6 +1,7 @@
 bin/
 obj/
 build/
+build32/
 .cache/
 cppshot.cbp
 cppshot.depend
@@ -8,10 +9,3 @@ cppshot.layout
 NextCppShot.cbp
 NextCppShot.depend
 NextCppShot.layout
-
-# local development
-.vscode/
-
-# build artifacts
-imgui.ini
-NextCppShot.exe

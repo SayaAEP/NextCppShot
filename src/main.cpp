@@ -41,13 +41,23 @@ struct CommandLineOptions {
 };
 
 void PrintHelp() {
+    // Attach to parent console if running from terminal (WIN32 subsystem)
+    if (AttachConsole(ATTACH_PARENT_PROCESS)) {
+        // Disable stdout buffering so text appears immediately
+        setvbuf(stdout, NULL, _IONBF, 0);
+        FILE* fp;
+        freopen_s(&fp, "CONOUT$", "w", stdout);
+        freopen_s(&fp, "CONERR$", "w", stderr);
+        // Ensure CRT handle is in sync
+        _fileno(stdout) >= 0;
+    }
+
     std::wcout << L"NextCppShot - Transparent Screenshot Utility\n\n";
     std::wcout << L"Usage: NextCppShot [OPTIONS]\n\n";
     std::wcout << L"Options:\n";
     std::wcout << L"  -o, --old-gui    Use the old Win32 GUI instead of ImGui\n";
     std::wcout << L"  -r, --render     Set render backend\n";
-    std::wcout << L"  -h, --help       Show this help message\n";
-    std::wcout << L"\n";
+    std::wcout << L"  -h, --help       Show this help message\n\n";
     std::wcout << L"Render Backends:\n";
     std::wcout << L"  opengl3 (default)        OpenGL 3\n";
     std::wcout << L"  directx9                  DirectX 9\n";
@@ -55,11 +65,11 @@ void PrintHelp() {
     std::wcout << L"  directx11           DirectX 11 (not yet implemented)\n";
     std::wcout << L"  directx12           DirectX 12 (not yet implemented)\n";
     std::wcout << L"  opengl2             OpenGL 2 (not yet implemented)\n";
-    std::wcout << L"  vulkan              Vulkan (not yet implemented — Vulkan SDK not installed)\n";
-    std::wcout << L"\n";
+    std::wcout << L"  vulkan              Vulkan (not yet implemented)\n\n";
     std::wcout << L"Keyboard Shortcuts:\n";
     std::wcout << L"  Ctrl+B           Take screenshot of active window\n";
     std::wcout << L"  Ctrl+Shift+B     Take CRE screenshot (active + inactive)\n";
+    fflush(stdout);
 }
 
 CommandLineOptions ParseCommandLine(int argc, wchar_t* argv[]) {

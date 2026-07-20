@@ -1,0 +1,63 @@
+name: Build (Win98)
+
+on:
+  workflow_dispatch:
+
+# Windows 98/2000 compatibility build
+# Requires TDM-GCC with unicows for Unicode support
+
+jobs:
+  build-win98:
+    name: Build Win98 x86
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install TDM GCC 5.1.0
+      run: |
+        curl https://geometrydash.eu/_other/TDM-GCC-32.zip -o compiler.zip -L
+        7z x compiler.zip -o"C:/TDM-GCC-5.1.0"
+
+    - name: Install Ninja
+      run: |
+        choco install ninja -y
+
+    - name: Configure
+      env:
+        PATH: 'C:/TDM-GCC-5.1.0/bin;C:/ProgramData/chocolatey/bin;C:/Windows/System32;C:/Windows'
+      run: |
+        cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=C:/TDM-GCC-5.1.0/bin/gcc.exe -DCMAKE_CXX_COMPILER=C:/TDM-GCC-5.1.0/bin/g++.exe -DLINK_UNICOWS=1 -DUNICODE -D_UNICODE -DNCS_MODERN_BACKENDS=OFF -B build -S .
+
+    - name: Build
+      env:
+        PATH: 'C:/TDM-GCC-5.1.0/bin;C:/ProgramData/chocolatey/bin;C:/Windows/System32;C:/Windows'
+      run: |
+        cmake --build build --config Release
+
+    - name: Create release folder
+      run: |
+        New-Item -ItemType Directory -Force release | Out-Null
+
+    - name: Copy executable
+      shell: cmd
+      run: |
+        copy build\NextCppShot.exe release\
+
+    - name: Download Win98 compatibility DLLs
+      run: |
+        curl https://github.com/Cvolton/CppShot/releases/download/v0.4/gdiplus.dll -o release/gdiplus.dll -L
+        curl https://geometrydash.eu/_other/unicows.dll -o release/unicows.dll -L
+
+    - name: Copy used licenses
+      run: |
+        Copy-Item C:/TDM-GCC-5.1.0/COPYING.winpthreads.txt ./release/
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: nextcppshot-win98
+        path: ./release/

@@ -68,10 +68,14 @@ public:
     }
 
     void OnResize(int width, int height) override {
-        if (!m_pd3dDevice || !m_hwnd) return;
+        if (!m_pd3dDevice || !m_hwnd || width <= 0 || height <= 0) return;
+        ImGui_ImplDX9_InvalidateDeviceObjects();
         m_d3dpp.BackBufferWidth  = width;
         m_d3dpp.BackBufferHeight = height;
-        m_pd3dDevice->Reset(&m_d3dpp);
+        HRESULT hr = m_pd3dDevice->Reset(&m_d3dpp);
+        if (SUCCEEDED(hr)) {
+            ImGui_ImplDX9_CreateDeviceObjects();
+        }
     }
 
     RendererType GetType() const override { return RendererType::DirectX9; }
