@@ -1,26 +1,17 @@
-name: Build Binaries
+name: Build (Win98)
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-    - '**'
+
+# Windows 98/2000/XP compatibility build
+# Uses llvm-mingw 20260616 with msvcrt (x86/x64) and ucrt (ARM)
+# - x86/x64: msvcrt CRT for max Win98 compatibility
+# - ARM: ucrt CRT (no Win98 support, but native compatibility)
 
 jobs:
-  build-gcc:
-    strategy:
-      fail-fast: false
-      matrix:
-        config:
-        - name: x86
-          compiler: https://geometrydash.eu/_other/TDM-GCC-32.zip
-          additional: -DLINK_UNICOWS=1
-          
-        - name: x64
-          compiler: https://geometrydash.eu/_other/TDM-GCC-64.zip
 
-
-    name: Build ${{ matrix.config.name }}
+  build-x86:
+    name: Build x86 (Win98)
     runs-on: windows-latest
 
     steps:
@@ -29,52 +20,46 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Install TDM GCC 5.1.0
+    - name: Install LLVM MinGW msvcrt i686
       run: |
-        curl ${{ matrix.config.compiler }} -o compiler.zip -L
-        7z x compiler.zip -o"C:/TDM-GCC-5.1.0"
+        curl https://github.com/mstorsjo/llvm-mingw/releases/download/20260616/llvm-mingw-20260616-msvcrt-i686.zip -o llvm-mingw.zip -L
+        7z x llvm-mingw.zip -o"C:/llvm-mingw"
 
-    - name: Install Ninja
+    - name: Install CMake and Ninja
       run: |
-        choco install ninja
+        choco install cmake ninja -y
 
     - name: Configure & Build
       run: |
-        $env:PATH = "C:/TDM-GCC-5.1.0/bin;" + $env:PATH
-        cmake ${{ matrix.config.additional }} -DCMAKE_BUILD_TYPE:STRING=Release -DCMAKE_C_COMPILER=C:/TDM-GCC-5.1.0/bin/gcc.exe -DCMAKE_CXX_COMPILER=C:/TDM-GCC-5.1.0/bin/g++.exe -G Ninja -B build -S .
+        $env:PATH = "C:/llvm-mingw/llvm-mingw-20260616-msvcrt-i686/bin;" + $env:PATH
+        cmake -DCMAKE_BUILD_TYPE:STRING=Release `
+              -DCMAKE_C_COMPILER=C:/llvm-mingw/llvm-mingw-20260616-msvcrt-i686/bin/i686-w64-mingw32-gcc.exe `
+              -DCMAKE_CXX_COMPILER=C:/llvm-mingw/llvm-mingw-20260616-msvcrt-i686/bin/i686-w64-mingw32-g++.exe `
+              -G Ninja -B build -S .
         cmake --build build --config Release
 
     - name: Move build to release folder
       run: |
-        mkdir release
-        mv build/CppShot.exe release/cppshot.exe
+        New-Item -ItemType Directory -Force release | Out-Null
+        Move-Item build/CppShot.exe release/
 
-    - name: Grab Windows 98/2000 compatibility DLL
-      if: matrix.config.name == 'x86'
+    - name: Grab Windows 98/2000 compatibility DLLs
       run: |
         curl https://github.com/Cvolton/CppShot/releases/download/v0.4/gdiplus.dll -o release/gdiplus.dll -L
         curl https://geometrydash.eu/_other/unicows.dll -o release/unicows.dll -L
-    
+
     - name: Copy used licenses
       run: |
-        cp C:/TDM-GCC-5.1.0/COPYING.winpthreads.txt ./release/
+        Copy-Item C:/llvm-mingw/llvm-mingw-20260616-msvcrt-i686/LICENSE.TXT ./release/ -ErrorAction SilentlyContinue
 
     - name: Upload release build
       uses: actions/upload-artifact@v4
       with:
-        name: cppshot-${{ matrix.config.name }}
+        name: nextcppshot-win98-x86
         path: ./release/
 
-  build-clang:
-    strategy:
-      fail-fast: false
-      matrix:
-        config:
-        - name: arm32
-          compiler: https://github.com/mstorsjo/llvm-mingw/releases/download/20241001/llvm-mingw-20241001-ucrt-x86_64.zip
-
-
-    name: Build ${{ matrix.config.name }}
+  build-x64:
+    name: Build x64
     runs-on: windows-latest
 
     steps:
@@ -83,46 +68,42 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Install llvm-mingw
+    - name: Install LLVM MinGW msvcrt x86_64
       run: |
-        curl ${{ matrix.config.compiler }} -o compiler.zip -L
-        7z x compiler.zip -o"C:/llvm"
+        curl https://github.com/mstorsjo/llvm-mingw/releases/download/20260616/llvm-mingw-20260616-msvcrt-x86_64.zip -o llvm-mingw.zip -L
+        7z x llvm-mingw.zip -o"C:/llvm-mingw"
 
-    - name: Install Ninja
+    - name: Install CMake and Ninja
       run: |
-        choco install ninja
+        choco install cmake ninja -y
 
     - name: Configure & Build
       run: |
-        $env:PATH = "C:/llvm/llvm-mingw-20241001-ucrt-x86_64/bin;" + $env:PATH
-        cmake -DCMAKE_BUILD_TYPE:STRING=Release -DCMAKE_C_COMPILER="C:\llvm\llvm-mingw-20241001-ucrt-x86_64\bin\armv7-w64-mingw32-gcc.exe" -DCMAKE_CXX_COMPILER="C:\llvm\llvm-mingw-20241001-ucrt-x86_64\bin\armv7-w64-mingw32-g++.exe" -DCMAKE_LINKER="C:\llvm\llvm-mingw-20241001-ucrt-x86_64\bin\armv7-w64-mingw32-ld.exe" -DCMAKE_RC_COMPILER="C:\\llvm\\llvm-mingw-20241001-ucrt-x86_64\\bin\\llvm-rc.exe" -G Ninja -B build -S .
+        $env:PATH = "C:/llvm-mingw/llvm-mingw-20260616-msvcrt-x86_64/bin;" + $env:PATH
+        cmake -DCMAKE_BUILD_TYPE:STRING=Release `
+              -DCMAKE_C_COMPILER=C:/llvm-mingw/llvm-mingw-20260616-msvcrt-x86_64/bin/x86_64-w64-mingw32-gcc.exe `
+              -DCMAKE_CXX_COMPILER=C:/llvm-mingw/llvm-mingw-20260616-msvcrt-x86_64/bin/x86_64-w64-mingw32-g++.exe `
+              -G Ninja -B build -S .
         cmake --build build --config Release
 
     - name: Move build to release folder
       run: |
-        mkdir release
-        mv build/CppShot.exe release/cppshot.exe
-    
-    - name: Copy used redistributables
+        New-Item -ItemType Directory -Force release | Out-Null
+        Move-Item build/CppShot.exe release/
+
+    - name: Copy used licenses
       run: |
-        cp "C:\Program Files (x86)\windows kits\10\Redist\10.0.19041.0\ucrt\DLLs\arm\*" ./release/
+        Copy-Item C:/llvm-mingw/llvm-mingw-20260616-msvcrt-x86_64/LICENSE.TXT ./release/ -ErrorAction SilentlyContinue
 
     - name: Upload release build
       uses: actions/upload-artifact@v4
       with:
-        name: cppshot-${{ matrix.config.name }}
+        name: nextcppshot-win64-x64
         path: ./release/
 
-  build-msvc:
-    strategy:
-      fail-fast: false
-      matrix:
-        config:
-        - name: arm64
-          platform: arm64
-
-    name: Build ${{ matrix.config.name }}
-    runs-on: windows-2019
+  build-arm64:
+    name: Build ARM64
+    runs-on: windows-latest
 
     steps:
     - name: Checkout
@@ -130,13 +111,82 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Configure & Build
+    - name: Install LLVM MinGW ucrt x86_64 (multi-target)
       run: |
-        cmake -G "Visual Studio 16 2019" -B build -DCMAKE_BUILD_TYPE=Release -A ${{ matrix.config.platform }} -S .
+        curl https://github.com/mstorsjo/llvm-mingw/releases/download/20260616/llvm-mingw-20260616-ucrt-x86_64.zip -o llvm-mingw.zip -L
+        7z x llvm-mingw.zip -o"C:/llvm-mingw"
+
+    - name: Install CMake and Ninja
+      run: |
+        choco install cmake ninja -y
+
+    - name: Configure & Build ARM64
+      run: |
+        $env:PATH = "C:/llvm-mingw/llvm-mingw-20260616-ucrt-x86_64/bin;" + $env:PATH
+        cmake -DCMAKE_BUILD_TYPE:STRING=Release `
+              -DCMAKE_C_COMPILER=C:/llvm-mingw/llvm-mingw-20260616-ucrt-x86_64/bin/aarch64-w64-mingw32-gcc.exe `
+              -DCMAKE_CXX_COMPILER=C:/llvm-mingw/llvm-mingw-20260616-ucrt-x86_64/bin/aarch64-w64-mingw32-g++.exe `
+              -DCMAKE_RC_COMPILER=C:/llvm-mingw/llvm-mingw-20260616-ucrt-x86_64/bin/llvm-rc.exe `
+              -G Ninja -B build -S .
         cmake --build build --config Release
+
+    - name: Move build to release folder
+      run: |
+        New-Item -ItemType Directory -Force release | Out-Null
+        Move-Item build/CppShot.exe release/
+
+    - name: Copy ARM64 redistributables
+      run: |
+        Copy-Item C:/llvm-mingw/llvm-mingw-20260616-ucrt-x86_64/LICENSE.TXT ./release/ -ErrorAction SilentlyContinue
+        Copy-Item "C:\Program Files (x86)\windows kits\10\Redist\10.0.19041.0\ucrt\DLLs\arm64\*" ./release/ -ErrorAction SilentlyContinue
 
     - name: Upload release build
       uses: actions/upload-artifact@v4
       with:
-        name: cppshot-${{ matrix.config.name }}
-        path: ./build/Release/
+        name: nextcppshot-win-arm64
+        path: ./release/
+
+  build-arm32:
+    name: Build ARM32 (Thumb)
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install LLVM MinGW ucrt x86_64 (multi-target)
+      run: |
+        curl https://github.com/mstorsjo/llvm-mingw/releases/download/20260616/llvm-mingw-20260616-ucrt-x86_64.zip -o llvm-mingw.zip -L
+        7z x llvm-mingw.zip -o"C:/llvm-mingw"
+
+    - name: Install CMake and Ninja
+      run: |
+        choco install cmake ninja -y
+
+    - name: Configure & Build ARM32
+      run: |
+        $env:PATH = "C:/llvm-mingw/llvm-mingw-20260616-ucrt-x86_64/bin;" + $env:PATH
+        cmake -DCMAKE_BUILD_TYPE:STRING=Release `
+              -DCMAKE_C_COMPILER=C:/llvm-mingw/llvm-mingw-20260616-ucrt-x86_64/bin/armv7-w64-mingw32-gcc.exe `
+              -DCMAKE_CXX_COMPILER=C:/llvm-mingw/llvm-mingw-20260616-ucrt-x86_64/bin/armv7-w64-mingw32-g++.exe `
+              -DCMAKE_RC_COMPILER=C:/llvm-mingw/llvm-mingw-20260616-ucrt-x86_64/bin/llvm-rc.exe `
+              -G Ninja -B build -S .
+        cmake --build build --config Release
+
+    - name: Move build to release folder
+      run: |
+        New-Item -ItemType Directory -Force release | Out-Null
+        Move-Item build/CppShot.exe release/
+
+    - name: Copy ARM32 redistributables
+      run: |
+        Copy-Item C:/llvm-mingw/llvm-mingw-20260616-ucrt-x86_64/LICENSE.TXT ./release/ -ErrorAction SilentlyContinue
+        Copy-Item "C:\Program Files (x86)\windows kits\10\Redist\10.0.19041.0\ucrt\DLLs\arm\*" ./release/ -ErrorAction SilentlyContinue
+
+    - name: Upload release build
+      uses: actions/upload-artifact@v4
+      with:
+        name: nextcppshot-win-arm32
+        path: ./release/
