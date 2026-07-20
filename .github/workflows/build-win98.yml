@@ -3,12 +3,15 @@ name: Build (Win98)
 on:
   workflow_dispatch:
 
-# Windows 98/2000 compatibility build
-# Requires TDM-GCC with unicows for Unicode support
+# Windows 98/2000/XP compatibility build
+# Uses llvm-mingw-xp 22.1.7 — patched toolchain for Win XP compatibility
+# - Avoids >=Vista API calls
+# - Uses msvcrt.dll (built-in on all Win versions)
+# - femulated-TLS (native TLS is Vista+)
 
 jobs:
   build-win98:
-    name: Build Win98 x86
+    name: Build x86 (Win98/XP)
     runs-on: windows-latest
 
     steps:
@@ -17,47 +20,40 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Install TDM GCC 5.1.0
+    - name: Install llvm-mingw-xp 22.1.7
       run: |
-        curl https://geometrydash.eu/_other/TDM-GCC-32.zip -o compiler.zip -L
-        7z x compiler.zip -o"C:/TDM-GCC-5.1.0"
+        curl https://github.com/mon/llvm-mingw-xp/releases/download/llvm-mingw-xp-22.1.7/llvm-mingw-xp-22.1.7-msvcrt-x86_64.zip -o llvm-mingw.zip -L
+        7z x llvm-mingw.zip -o"C:/llvm-mingw"
 
-    - name: Install Ninja
+    - name: Install CMake and Ninja
       run: |
-        choco install ninja -y
+        choco install cmake ninja -y
 
-    - name: Configure
-      env:
-        PATH: 'C:/TDM-GCC-5.1.0/bin;C:/ProgramData/chocolatey/bin;C:/Windows/System32;C:/Windows'
+    - name: Configure & Build
       run: |
-        cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=C:/TDM-GCC-5.1.0/bin/gcc.exe -DCMAKE_CXX_COMPILER=C:/TDM-GCC-5.1.0/bin/g++.exe -DLINK_UNICOWS=1 -DUNICODE -D_UNICODE -DNCS_MODERN_BACKENDS=OFF -B build -S .
-
-    - name: Build
-      env:
-        PATH: 'C:/TDM-GCC-5.1.0/bin;C:/ProgramData/chocolatey/bin;C:/Windows/System32;C:/Windows'
-      run: |
+        $env:PATH = "C:/llvm-mingw/bin;" + $env:PATH
+        cmake -DCMAKE_BUILD_TYPE:STRING=Release `
+              -DCMAKE_C_COMPILER=C:/llvm-mingw/bin/i686-w64-mingw32-gcc.exe `
+              -DCMAKE_CXX_COMPILER=C:/llvm-mingw/bin/i686-w64-mingw32-g++.exe `
+              -G Ninja -B build -S .
         cmake --build build --config Release
 
-    - name: Create release folder
+    - name: Move build to release folder
       run: |
         New-Item -ItemType Directory -Force release | Out-Null
+        Move-Item build/NextCppShot.exe release/
 
-    - name: Copy executable
-      shell: cmd
-      run: |
-        copy build\NextCppShot.exe release\
-
-    - name: Download Win98 compatibility DLLs
+    - name: Grab Windows 98/2000 compatibility DLLs
       run: |
         curl https://github.com/Cvolton/CppShot/releases/download/v0.4/gdiplus.dll -o release/gdiplus.dll -L
         curl https://geometrydash.eu/_other/unicows.dll -o release/unicows.dll -L
 
     - name: Copy used licenses
       run: |
-        Copy-Item C:/TDM-GCC-5.1.0/COPYING.winpthreads.txt ./release/
+        Copy-Item C:/llvm-mingw/LICENSE.TXT ./release/ -ErrorAction SilentlyContinue
 
-    - name: Upload artifact
+    - name: Upload release build
       uses: actions/upload-artifact@v4
       with:
-        name: nextcppshot-win98
+        name: nextcppshot-win98-x86
         path: ./release/

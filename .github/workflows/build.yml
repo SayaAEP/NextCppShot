@@ -6,7 +6,7 @@ on:
 jobs:
   build-msvc:
     name: Build MSVC ${{ matrix.config.platform }}
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     strategy:
       fail-fast: false
@@ -60,9 +60,9 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Install MinGW
+    - name: Install build tools
       run: |
-        choco install mingw -y
+        choco install cmake ninja -y
 
     - name: Configure
       env:
