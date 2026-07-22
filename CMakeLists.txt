@@ -16,7 +16,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
 		add_link_options(/OPT:REF /OPT:ICF /LTCG /INCREMENTAL:NO /SUBSYSTEM:WINDOWS)
 	ELSE()
 		add_compile_options(-O2 -mwindows)
-		add_link_options(-Wl,--gc-sections$<COMMA>-s$<COMMA>--subsystem$<COMMA>windows$<COMMA>5.01)
+		add_link_options(-Wl,--gc-sections,-s)
 	ENDIF()
 endif()
 
