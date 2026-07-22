@@ -31,10 +31,10 @@ jobs:
 
     - name: Configure & Build
       run: |
-        $env:PATH = "C:/llvm-mingw/bin;" + $env:PATH
+        $env:PATH = "C:/llvm-mingw/llvm-mingw-xp-22.1.7-msvcrt-x86_64/bin;" + $env:PATH
         cmake -DCMAKE_BUILD_TYPE:STRING=Release `
-              -DCMAKE_C_COMPILER=C:/llvm-mingw/bin/i686-w64-mingw32-gcc.exe `
-              -DCMAKE_CXX_COMPILER=C:/llvm-mingw/bin/i686-w64-mingw32-g++.exe `
+              -DCMAKE_C_COMPILER=C:/llvm-mingw/llvm-mingw-xp-22.1.7-msvcrt-x86_64/bin/i686-w64-mingw32-gcc.exe `
+              -DCMAKE_CXX_COMPILER=C:/llvm-mingw/llvm-mingw-xp-22.1.7-msvcrt-x86_64/bin/i686-w64-mingw32-g++.exe `
               -G Ninja -B build -S .
         cmake --build build --config Release
 
@@ -50,7 +50,7 @@ jobs:
 
     - name: Copy used licenses
       run: |
-        Copy-Item C:/llvm-mingw/LICENSE.TXT ./release/ -ErrorAction SilentlyContinue
+        Copy-Item C:/llvm-mingw/llvm-mingw-xp-22.1.7-msvcrt-x86_64/LICENSE.TXT ./release/ -ErrorAction SilentlyContinue
 
     - name: Upload release build
       uses: actions/upload-artifact@v4
