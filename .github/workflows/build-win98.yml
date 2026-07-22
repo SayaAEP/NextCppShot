@@ -33,6 +33,7 @@ jobs:
       run: |
         $env:PATH = "C:/llvm-mingw/llvm-mingw-xp-22.1.7-msvcrt-x86_64/bin;" + $env:PATH
         cmake -DCMAKE_BUILD_TYPE:STRING=Release `
+              -DNCS_MODERN_BACKENDS=OFF `
               -DCMAKE_C_COMPILER=C:/llvm-mingw/llvm-mingw-xp-22.1.7-msvcrt-x86_64/bin/i686-w64-mingw32-gcc.exe `
               -DCMAKE_CXX_COMPILER=C:/llvm-mingw/llvm-mingw-xp-22.1.7-msvcrt-x86_64/bin/i686-w64-mingw32-g++.exe `
               -G Ninja -B build -S .
